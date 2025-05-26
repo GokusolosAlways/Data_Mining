@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 # Charger le modèle
-model = joblib.load("xgboost_model.pkl")
+model, feature_names = joblib.load("xgboost_model.pkl")
+
 
 # Titre de l'application
 st.title("Prédiction du Prix d'un Bus \U0001f68c")
@@ -65,6 +66,7 @@ input_data["Bus Model"] = input_data["Bus Model"].apply(lambda x: bus_models.ind
 
 # Prédiction
 if st.button("Prédire le prix"):
+    input_data = input_data[feature_names]
     prediction = model.predict(input_data)[0]
     error_margin = 16645.71  # Valeur RMSE obtenue précédemment
     lower_bound = prediction - error_margin
