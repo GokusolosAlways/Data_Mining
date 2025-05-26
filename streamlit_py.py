@@ -12,9 +12,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# Charger le modèle
+# Charger le modèle et les noms de colonnes
 model, feature_names = joblib.load("xgboost_model.pkl")
-
 
 # Titre de l'application
 st.title("Prédiction du Prix d'un Bus \U0001f68c")
@@ -23,12 +22,42 @@ st.markdown("""
 Saisissez les caractéristiques ci-dessous pour prédire le prix d'un bus ainsi que l'erreur estimée.
 """)
 
-# Dictionnaires ou listes d’options pour les champs catégoriques
-bus_types = ["Type A", "Type B", "Type C", "Type D"]
-states = ["OH", "AR", "CA", "TX"]  # à adapter
-vehicle_dealers = ["Ohio CAT", "Central States Bus Sales"]  # à adapter
-sources = ["META Co-Op", "Arkansas Department of Transformation"]  # à adapter
-bus_models = ["Saf-T-Liner C2 Jouley", "Vision"]  # à adapter
+# Dictionnaires ou listes d’options pour les champs catégoriques (affichés à l’utilisateur)
+bus_types = ['Type A', 'Type C', 'Type D']
+states = ['AR', 'AZ', 'FL', 'GA', 'KY', 'LA', 'ME', 'MS', 'NC', 'NY', 'OH', 'SC', 'UT', 'VA', 'WA', 'WV']
+vehicle_dealers = [
+    'BYD Coach & Bus LLC', 'Blue Bird Bus Sales of Pittsburgh', 'Bluegrass International', 'Boyd-Cat',
+    'Bryson Sales', 'Bryson Sales and Service', 'Burroughs Diesel', 'Canyon State Bus Sales',
+    'Carolina International Trucks', 'Carolina Thomas', 'Central States Bus Sales', 'Empire Truck Sales',
+    'Florida Transportation Systems', 'GreenPower Motor Company', 'GreenPower of WV', 'Gregory Poole',
+    'HK Truck Services', 'Interstate Transportation Equipment', 'Kent-Mitchell Bus Sales and Service',
+    'Kingmor Supply', 'Leonard Bus Sales', 'Leonard Bus Sales / AT New York City',
+    'Leonard Bus Sales / Truck King International', 'Lewis Bus Group', 'Lion Electric',
+    "Master's Transportation", 'Matheny Motor Truck', 'Matthers Bus Alliance', 'Matthews Bus Alliance',
+    'Matthews Buses / Nesco Bus and Truck Sales', 'Midwest Bus Sales', 'NY Bus Sales / JP Bus & Truck Repair',
+    'NY Bus Sales / JP Bus and Truck Repair', 'Northwest Bus Sales', 'Ohio CAT', 'Peach State Truck Centers',
+    'RWC Group', 'RWC International', 'Rohrer Enterprises', 'Ross Bus and Equipment Sales',
+    'Rush Truck Centers of Georgia', 'Rush Truck Sales', 'Schetky NW Sales', 'Sonny Merryman',
+    'Sunstate International Trucks', 'Twin State Trucks', 'WNY Bus Parts',
+    'WNY Bus Parts / Factory Direct Bus Sales', 'Waters Truck and Tractor', 'Whites IC Bus',
+    'Worldwide Equipment of WV', 'Yancey Bros.'
+]
+sources = [
+    'Arizona Department of Administration',
+    'Arkansas Department of Transformation and Shared Services',
+    'Florida Department of Education', 'Georgia Department of Administrative Services',
+    'Kentucky Department of Education', 'Louisiana Division of Administration', 'META Co-Op',
+    'Maine Department of Administrative and Financial Services', 'Mississippi Department of Education',
+    'New York State Office of General Services', 'North Carolina Department of Administration',
+    'South Carolina Division of Procurement Services', 'Utah Division of Purchasing and General Services',
+    'Virginia Department of General Services',
+    'Washington Office of Superintendent of Public Instruction', 'West Virginia Purchasing Division'
+]
+bus_models = [
+    '051MS', 'All-American', 'Atlas/Z19', 'BEAST', 'CE/PB10E', 'DE516', 'DE516F', 'DH500', 'G5', 'LionC', 'LionD',
+    'Magellan', 'Nano BEAST', 'O-Series', 'S11N01', 'S12N01', 'S12N02', 'S82N01', 'SST',
+    'Saf-T-Liner C2 Jouley', 'Vision'
+]
 
 # Interface utilisateur : champs de saisie
 bus_type = st.selectbox("Bus Type", bus_types)
@@ -42,33 +71,40 @@ purchase_year = st.selectbox("Purchase Year", [2019, 2020, 2021, 2022, 2023])
 engine_size = st.slider("Engine Size (cc)", 500, 5000, step=100)
 bus_model = st.selectbox("Bus Model", bus_models)
 
+maintenance_history = st.selectbox("Maintenance History", ['Average', 'Good', 'Poor'])
+transmission_type = st.selectbox("Transmission Type", ['Automatic', 'Manual'])
+owner_type = st.selectbox("Owner Type", ['First', 'Third'])
+tire_condition = st.selectbox("Tire Condition", ['Good', 'New', 'Worn Out'])
+brake_condition = st.selectbox("Brake Condition", ['Good', 'New', 'Worn Out'])
+battery_status = st.selectbox("Battery Status", ['Good', 'New', 'Weak'])
+
 # Création du DataFrame d'entrée
 input_data = pd.DataFrame({
-    "Bus Type": [bus_type],
+    "Bus Type": [bus_types.index(bus_type)],
     "Seating Capacity": [seating_capacity],
-    "State": [state],
-    "Vehicle Dealer": [vehicle_dealer],
+    "State": [states.index(state)],
+    "Vehicle Dealer": [vehicle_dealers.index(vehicle_dealer)],
     "Insurance_Premium": [insurance_premium],
     "Vehicle_Age": [vehicle_age],
-    "Source": [source],
+    "Source": [sources.index(source)],
     "Purchase Year": [purchase_year],
     "Engine_Size": [engine_size],
-    "Bus Model": [bus_model]
+    "Bus Model": [bus_models.index(bus_model)],
+    "Maintenance_History": [ ['Average', 'Good', 'Poor'].index(maintenance_history) ],
+    "Transmission_Type": [ ['Automatic', 'Manual'].index(transmission_type) ],
+    "Owner_Type": [ ['First', 'Third'].index(owner_type) ],
+    "Tire_Condition": [ ['Good', 'New', 'Worn Out'].index(tire_condition) ],
+    "Brake_Condition": [ ['Good', 'New', 'Worn Out'].index(brake_condition) ],
+    "Battery_Status": [ ['Good', 'New', 'Weak'].index(battery_status) ]
 })
 
-# Encodage des variables catégoriques (doit correspondre à l'encodage du modèle)
-# Pour simplifier : label encoding simulé par ordre dans la liste
-input_data["Bus Type"] = input_data["Bus Type"].apply(lambda x: bus_types.index(x))
-input_data["State"] = input_data["State"].apply(lambda x: states.index(x))
-input_data["Vehicle Dealer"] = input_data["Vehicle Dealer"].apply(lambda x: vehicle_dealers.index(x))
-input_data["Source"] = input_data["Source"].apply(lambda x: sources.index(x))
-input_data["Bus Model"] = input_data["Bus Model"].apply(lambda x: bus_models.index(x))
+# Réorganiser les colonnes dans le bon ordre
+input_data = input_data[feature_names]
 
 # Prédiction
 if st.button("Prédire le prix"):
-    input_data = input_data[feature_names]
     prediction = model.predict(input_data)[0]
-    error_margin = 16645.71  # Valeur RMSE obtenue précédemment
+    error_margin = 16645.71  # RMSE connue
     lower_bound = prediction - error_margin
     upper_bound = prediction + error_margin
 
